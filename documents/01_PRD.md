@@ -178,8 +178,8 @@ Fitur yang dikecualikan secara eksplisit untuk mencegah _scope creep_. Didokumen
 **Kriteria Penerimaan:**
 
 - [ ] KP1: Pengguna dapat mengakses formulir registrasi dengan bidang: nama lengkap, email, password (min. 8 karakter), dan konfirmasi password.
-- [ ] KP2: Backend Express menerima payload registrasi, validasi input, hash password dengan bcrypt, insert ke tabel users (atau profiles), generate JWT token, kirim response ke client.
-- [ ] KP3: Setelah registrasi berhasil, profil pengguna dibuat di tabel `profiles` dengan `role = 'user'`.
+- [ ] KP2: Backend Express menerima payload registrasi, validasi input, hash password dengan bcrypt, insert ke tabel users, generate JWT token, kirim response ke client.
+- [ ] KP3: Setelah registrasi berhasil, profil pengguna dibuat di tabel `users` dengan `role = 'user'`.
 - [ ] KP4: Pengguna secara otomatis login dan diarahkan ke peta publik.
 - [ ] KP5: Jika email sudah ada, sistem menampilkan pesan error yang jelas tanpa mengungkapkan apakah email tersebut ada di database.
 
@@ -206,7 +206,7 @@ Fitur yang dikecualikan secara eksplisit untuk mencegah _scope creep_. Didokumen
 **Kriteria Penerimaan:**
 
 - [ ] KP1: Admin login menggunakan formulir autentikasi yang sama dengan pengguna publik.
-- [ ] KP2: Pasca-autentikasi, sistem memeriksa `profiles.role` dan `profiles.assigned_wilayah_id`.
+- [ ] KP2: Pasca-autentikasi, sistem memeriksa `users.role` dan `users.assigned_wilayah_id`.
 - [ ] KP3: Jika `role = 'admin_wilayah'`, pengguna diarahkan ke `/admin/wilayah` dengan data yang sudah terfilter ke zona yang ditugaskan.
 - [ ] KP4: Jika `role = 'admin_pusat'`, pengguna diarahkan ke `/admin/pusat` dengan akses data penuh.
 - [ ] KP5: Pengguna publik (`role = 'user'`) yang mencoba mengakses URL `/admin/*` diarahkan ke peta publik dengan pesan 403.
@@ -423,7 +423,7 @@ Fitur yang dikecualikan secara eksplisit untuk mencegah _scope creep_. Didokumen
 
 **Kriteria Penerimaan:**
 
-- [ ] KP1: Pada setiap _page load_ yang terautentikasi, sistem memperbarui `profiles.last_seen_at` ke stempel waktu saat ini.
+- [ ] KP1: Pada setiap _page load_ yang terautentikasi, sistem memperbarui `users.last_seen_at` ke stempel waktu saat ini.
 - [ ] KP2: Pada halaman "Laporan Saya", laporan apa pun di mana `updated_at > user.last_seen_at` menampilkan lencana titik merah atau label "Diperbarui".
 - [ ] KP3: Mengklik masuk ke detail laporan menandai laporan tersebut sebagai "sudah dilihat" (memperbarui `last_seen_at` per laporan atau menghapus lencana).
 - [ ] KP4: Lencana bertahan di seluruh sesi sampai pengguna melihat laporan yang diperbarui.
