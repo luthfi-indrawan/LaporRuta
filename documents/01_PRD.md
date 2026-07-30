@@ -1,4 +1,4 @@
-# Product Requirements Document (PRD) - LaporRuta (Platform Pelaporan Kerusakan Infrastruktur Publik Berbasis Crowdsourcing)
+# Product Requirements Document (PRD) - LaporRuta
 
 ## Daftar Isi
 
@@ -6,14 +6,11 @@
 2. [Persona Pengguna Target](#2-persona-pengguna-target)
 3. [Matriks Ruang Lingkup Fitur (Metode MoSCoW)](#3-matriks-ruang-lingkup-fitur-metode-moscow)
 4. [User Story & Kriteria Penerimaan](#4-user-story--kriteria-penerimaan)
-   - 4.1 Autentikasi & Otorisasi
-   - 4.2 Eksplorasi Peta Publik
-   - 4.3 Pelaporan Berbasis Geo-Tag
-   - 4.4 Sistem Upvote Komunitas
-   - 4.5 Manajemen Siklus Hidup Laporan (Admin)
-   - 4.6 Sinkronisasi Data Real-Time
-   - 4.7 Aktivitas & Transparansi
-   - 4.8 Hierarki Administrasi
+5. [Lampiran A: Referensi Tech Stack Final](#lampiran-a-referensi-tech-stack-final)
+6. [Lampiran B: Mesin Status State Machine](#lampiran-b-mesin-status-state-machine)
+7. [Lampiran C: Formula Skor Prioritas (v2.0 Final)](#lampiran-c-formula-skor-prioritas-v20-final)
+8. [Lampiran D: Ringkasan Skema Database (Adjusted)](#lampiran-d-ringkasan-skema-database-adjusted)
+9. [Lampiran E: Architecture Decision Records (ADR)](#lampiran-e-architecture-decision-records-adr)
 
 ---
 
@@ -21,7 +18,7 @@
 
 ### 1.1 Problem Statement
 
-Warga menghadapi ambiguitas dan friksi saat melaporkan fasilitas publik yang rusak (misalnya jalan berlubang, lampu penerangan mati, drainase tersumbat). platform yang ada seringkali tidak transparan, tidak interaktif, dan kekurangan _feedback loop_. Di sisi lain, pihak berwenang setempat kekurangan data real-time berbasis _crowdsourcing_ untuk memprioritaskan perbaikan secara efisien. Belum ada platform terpadu yang menjembatani pelaporan warga dengan tindakan administratif secara transparan dan berbasis lokasi.
+Warga menghadapi ambiguitas dan friksi saat melaporkan fasilitas publik yang rusak (misalnya jalan berlubang, lampu penerangan mati, drainase tersumbat). Platform yang ada seringkali tidak transparan, tidak interaktif, dan kekurangan _feedback loop_. Di sisi lain, pihak berwenang setempat kekurangan data real-time berbasis _crowdsourcing_ untuk memprioritaskan perbaikan secara efisien. Belum ada platform terpadu yang menjembatani pelaporan warga dengan tindakan administratif secara transparan dan berbasis lokasi.
 
 **Poin-Poin Utama:**
 
@@ -93,50 +90,43 @@ Warga menghadapi ambiguitas dan friksi saat melaporkan fasilitas publik yang rus
 
 ### Must-Have (Garis Dasar MVP)
 
-Fitur-fitur ini tidak bisa dinegosiasikan untuk rilis awal. Produk tidak dapat berfungsi tanpa fitur ini.
-
-| ID                 | Fitur                                         | Deskripsi                                                                                                                                                                                                                                              | Pemilik            |
-| ------------------ | --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------ |
-| M-01               | **Autentikasi Pengguna**                      | Sistem autentikasi custom via backend Express: registrasi dengan email/password (bcrypt hashing), login mengembalikan JWT token (access token + refresh token), validasi email, dan session management manual. Login wajib untuk pelaporan dan upvote. | Backend / Frontend |
-| M-02               | **Kontrol Akses Berbasis Peran (RBAC)**       | Tiga peran: Public User, Admin Wilayah, Admin Pusat. RLS Supabase dinonaktifkan. Akses ditegakkan via middleware Express (auth middleware + role middleware) dan query filtering manual di setiap endpoint.                                            | Backend            |
-| M-03               | **Eksplorasi Peta Interaktif**                | Peta yang menghadap publik dengan penanda berkode warna berdasarkan kategori laporan dan status penyelesaian.                                                                                                                                          | Frontend           |
-| M-04               | **Pengelompokan Penanda (Marker Clustering)** | Pengelompokan otomatis penanda peta di area padat untuk mencegah kekacauan UI.                                                                                                                                                                         | Frontend           |
-| M-05               | **Pemilih Lokasi Bertingkat**                 | Pemilihan lokasi berbasis form: Provinsi → Kota → Kecamatan → Kelurahan (opsional). Mendukung entri data master manual.                                                                                                                                | Frontend / Backend |
-| M-06               | **Penanda Pin pada Mini Peta**                | Setelah memilih kecamatan, mini peta memperbesar ke area tersebut memungkinkan pengguna menyempurnakan lokasi pin. Koordinat disimpan bersama data administrasi.                                                                                       | Frontend           |
-| M-07               | **Formulir Pelaporan Berbasis Geo-Tag**       | Menangkap: judul, deskripsi, kategori, teks alamat spesifik, area administrasi yang dipilih, koordinat (opsional tetapi dianjurkan), dan unggah gambar.                                                                                                | Frontend / Backend |
-| M-08               | **Unggah Gambar Langsung**                    | Client mengunggah gambar ke backend Express (multipart/form-data), backend melakukan validasi & kompresi, lalu backend mengunggah ke Supabase Storage menggunakan Service Role Key. Backend mengembalikan URL publik ke client.                        |
-| Backend / Frontend |
-| M-09               | **Antrian Moderasi**                          | Laporan baru memasuki status `Pending Verification`. Tidak terlihat di peta publik sampai diverifikasi oleh admin.                                                                                                                                     | Backend            |
-| M-10               | **Sistem Upvote Komunitas**                   | Pengguna terverifikasi dapat memberikan upvote pada laporan terverifikasi. Satu upvote per pengguna per laporan. Pencegahan duplikat via ID pengguna terverifikasi.                                                                                    | Backend            |
-| M-11               | **Siklus Hidup Status Laporan**               | Mesin status tetap: `Pending Verification` → `Verified` → `In Progress` → `Resolved`. Status terminal tambahan: `Rejected`.                                                                                                                            | Backend            |
-| M-12               | **Dasbor Admin Wilayah**                      | Tampilan terfilter hanya menampilkan laporan di dalam zona yang ditugaskan ke admin. Kemampuan untuk memverifikasi, menolak, mengubah status, dan menambahkan catatan internal.                                                                        | Frontend           |
-| M-13               | **Dasbor Admin Pusat**                        | Tampilan penuh semua laporan di semua zona. Kemampuan untuk mengesampingkan tindakan admin regional mana pun, menugaskan ulang laporan antar-zona, dan mengelola akun admin.                                                                           | Frontend           |
-| M-14               | **Penugasan Otomatis & Fallback**             | Laporan secara otomatis ditugaskan ke Admin Wilayah berdasarkan distrik yang dipilih pada laporan. Jika tidak ada admin untuk zona tersebut, _fallback_ otomatis ke antrian Admin Pusat.                                                               | Backend            |
-| M-15               | **Pembaruan Peta Publik Real-Time**           | Socket.io (atau WebSocket native) pada server Express menyiarkan event: report:verified, report:status_changed, report:new ke room/channel yang sesuai (public-room, admin-room-{wilayah_id}).                                                         | Backend / Frontend |
-| M-16               | **Pembaruan Dasbor Admin Real-Time**          | Socket.io (atau WebSocket native) pada server Express menyiarkan event: report:verified, report:status_changed, report:new ke room/channel yang sesuai (public-room, admin-room-{wilayah_id}).                                                         | Backend / Frontend |
-| M-17               | **Log Aktivitas / Audit Trail**               | Linimasa tak terubah per laporan menampilkan setiap tindakan: pembuatan, upvote, verifikasi, perubahan status, penolakan, dengan aktor dan stempel waktu.                                                                                              | Backend            |
-| M-18               | **Indikator Belum Dibaca (Berbasis Pull)**    | Lencana indikator pada menu "Laporan Saya" ketika `updated_at` laporan lebih baru dari `last_seen_at` pengguna. Tidak ada notifikasi _push_.                                                                                                           | Frontend           |
-| M-19               | **Algoritma Peringkat Prioritas**             | Skor terhitung yang ditampilkan pada dasbor admin untuk membantu prioritisasi. Formula: `Score = (Upvotes × 3) + (Category_Urgency_Weight × 5) − (Report_Age_in_Days × 0.5)`. Bobot kategori didefinisikan di data master.                             | Backend            |
-| M-20               | **Desain Responsif**                          | Tata letak _mobile-first_ dengan kompatibilitas desktop penuh. Tailwind CSS + Shadcn UI.                                                                                                                                                               | Frontend           |
+| ID   | Fitur                                               | Deskripsi                                                                                                                                                                                                                                                                           | Pemilik            |
+| ---- | --------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------ |
+| M-01 | **Autentikasi Pengguna**                            | Sistem autentikasi custom via backend Express: registrasi dengan email/password (bcrypt hashing), login mengembalikan JWT token (access token + refresh token), validasi email, dan session management manual. Login wajib untuk pelaporan dan upvote.                              | Backend / Frontend |
+| M-02 | **Kontrol Akses Berbasis Peran (RBAC)**             | Tiga peran: Public User, Admin Wilayah, Admin Pusat. **RLS Supabase dinonaktifkan sepenuhnya.** Akses ditegakkan via middleware Express (auth middleware + role middleware) dan query filtering manual di setiap endpoint.                                                          | Backend            |
+| M-03 | **Eksplorasi Peta Interaktif**                      | Peta yang menghadap publik dengan penanda berkode warna berdasarkan kategori laporan dan status penyelesaian.                                                                                                                                                                       | Frontend           |
+| M-04 | **Pengelompokan Penanda (Marker Clustering)**       | Pengelompokan otomatis penanda peta di area padat untuk mencegah kekacauan UI.                                                                                                                                                                                                      | Frontend           |
+| M-05 | **Pemilih Lokasi Bertingkat**                       | Pemilihan lokasi berbasis form: Provinsi → Kota → Kecamatan → Kelurahan (opsional). Mendukung entri data master manual.                                                                                                                                                             | Frontend / Backend |
+| M-06 | **Penanda Pin pada Mini Peta**                      | Setelah memilih kecamatan, mini peta memperbesar ke area tersebut memungkinkan pengguna menyempurnakan lokasi pin. Koordinat disimpan bersama data administrasi.                                                                                                                    | Frontend           |
+| M-07 | **Formulir Pelaporan Berbasis Geo-Tag**             | Menangkap: judul, deskripsi, kategori, teks alamat spesifik, area administrasi yang dipilih, koordinat (opsional tetapi dianjurkan), dan unggah gambar.                                                                                                                             | Frontend / Backend |
+| M-08 | **Unggah Gambar via Backend Proxy**                 | Client mengunggah gambar ke backend Express (multipart/form-data), backend melakukan validasi & kompresi, lalu backend mengunggah ke Supabase Storage menggunakan Service Role Key. Backend mengembalikan URL publik ke client. **Service Role Key tidak pernah expose ke client.** | Backend / Frontend |
+| M-09 | **Antrian Moderasi**                                | Laporan baru memasuki status `Pending Verification`. Tidak terlihat di peta publik sampai diverifikasi oleh admin.                                                                                                                                                                  | Backend            |
+| M-10 | **Sistem Upvote Komunitas**                         | Pengguna terverifikasi dapat memberikan upvote pada laporan terverifikasi. Satu upvote per pengguna per laporan. Pencegahan duplikat via ID pengguna terverifikasi.                                                                                                                 | Backend            |
+| M-11 | **Siklus Hidup Status Laporan**                     | Mesin status tetap: `Pending Verification` → `Verified` → `In Progress` → `Resolved`. Status terminal tambahan: `Rejected`.                                                                                                                                                         | Backend            |
+| M-12 | **Dasbor Admin Wilayah**                            | Tampilan terfilter hanya menampilkan laporan di dalam zona yang ditugaskan ke admin. Kemampuan untuk memverifikasi, menolak, mengubah status, dan menambahkan catatan internal.                                                                                                     | Frontend           |
+| M-13 | **Dasbor Admin Pusat**                              | Tampilan penuh semua laporan di semua zona. Kemampuan untuk mengesampingkan tindakan admin regional mana pun, menugaskan ulang laporan antar-zona, dan mengelola akun admin.                                                                                                        | Frontend           |
+| M-14 | **Penugasan Otomatis & Fallback**                   | Laporan secara otomatis ditugaskan ke Admin Wilayah berdasarkan distrik yang dipilih pada laporan. Jika tidak ada admin untuk zona tersebut, _fallback_ otomatis ke antrian Admin Pusat.                                                                                            | Backend            |
+| M-15 | **Pembaruan Peta Publik Real-Time**                 | Socket.io pada server Express menyiarkan event: `report:verified`, `report:status_changed`, `report:new` ke room `public:reports`.                                                                                                                                                  | Backend / Frontend |
+| M-16 | **Pembaruan Dasbor Admin Real-Time**                | Socket.io pada server Express menyiarkan event ke room `admin:{wilayah_id}` untuk admin wilayah dan `admin:pusat` untuk admin pusat.                                                                                                                                                | Backend / Frontend |
+| M-17 | **Log Aktivitas / Audit Trail**                     | Linimasa tak terubah per laporan menampilkan setiap tindakan: pembuatan, upvote, verifikasi, perubahan status, penolakan, dengan aktor dan stempel waktu.                                                                                                                           | Backend            |
+| M-18 | **Indikator Belum Dibaca (Berbasis Pull - Global)** | Lencana indikator pada menu "Laporan Saya" ketika `updated_at` laporan lebih baru dari `users.last_seen_at` pengguna. **Pendekatan MVP: global per user.** Tidak ada notifikasi _push_.                                                                                             | Frontend           |
+| M-19 | **Algoritma Peringkat Prioritas**                   | Skor terhitung yang ditampilkan pada dasbor admin untuk membantu prioritisasi. Formula final: `Score = (Upvotes × 3) + (Category_Urgency_Weight × 5) + (Has_Coordinate ? 2 : 0) − (Report_Age_in_Days × 0.5)`. Bobot kategori didefinisikan di data master.                         | Backend            |
+| M-20 | **Desain Responsif**                                | Tata letak _mobile-first_ dengan kompatibilitas desktop penuh. Tailwind CSS + Shadcn UI.                                                                                                                                                                                            | Frontend           |
 
 ### Should-Have (Prioritas Tinggi)
 
-Fitur yang secara signifikan meningkatkan UX dan efisiensi admin tetapi tidak memblokir peluncuran MVP.
-
-| ID   | Fitur                                  | Deskripsi                                                                                                                                                                               |
-| ---- | -------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| S-01 | **Deteksi Laporan Duplikat**           | Ketika pengguna membuat laporan, sistem memeriksa laporan yang sudah ada dalam radius 100m, kategori sama, usia < 7 hari, dan menyarankan untuk meng-upvote laporan yang sudah ada.     |
-| S-02 | **Sistem Komentar**                    | Pengguna terverifikasi dapat menambahkan komentar teks ke laporan yang sudah ada untuk memberikan konteks tambahan (misalnya, "Masih rusak sampai hari ini").                           |
-| S-03 | **Catatan Internal Admin**             | Bidang catatan pribadi pada setiap laporan yang hanya terlihat oleh admin, untuk koordinasi internal (misalnya, "Suku cadang dipesan, ETA 3 hari").                                     |
-| S-04 | **Kompresi Gambar**                    | Kompresi gambar sisi klien sebelum unggah ke Supabase Storage (target: ≤500KB per gambar) untuk menghemat bandwidth dan storage.                                                        |
-| S-05 | **Tampilan Heatmap (Admin Only)**      | Tombol _toggle_ pada dasbor admin untuk melihat _overlay heatmap_ kepadatan laporan alih-alih penanda individual. Berguna untuk mengidentifikasi zona kegagalan infrastruktur sistemik. |
-| S-06 | **Pencarian & Filter**                 | Antarmuka publik dan admin mendukung penyaringan berdasarkan: kategori, status, rentang tanggal, kecamatan, dan pencarian kata kunci dalam judul/deskripsi.                             |
-| S-07 | **Antrian Admin yang Dapat Diurutkan** | Dasbor admin memungkinkan pengurutan laporan berdasarkan: skor prioritas, terbaru dulu, terlama dulu, jumlah upvote.                                                                    |
-| S-08 | **Pembukaan Ulang Laporan / Dispute**  | Pengguna dapat meminta peninjauan ulang jika mereka yakin laporan `Resolved` belum benar-benar diperbaiki. Membuat _flag_ untuk Admin Pusat.                                            |
+| ID   | Fitur                                  | Deskripsi                                                                                                                                                                                   |
+| ---- | -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| S-01 | **Deteksi Laporan Duplikat**           | Ketika pengguna membuat laporan, sistem memeriksa laporan yang sudah ada dalam radius 100m, kategori sama, usia < 7 hari, dan menyarankan untuk meng-upvote laporan yang sudah ada.         |
+| S-02 | **Sistem Komentar**                    | Pengguna terverifikasi dapat menambahkan komentar teks ke laporan yang sudah ada untuk memberikan konteks tambahan (misalnya, "Masih rusak sampai hari ini").                               |
+| S-03 | **Catatan Internal Admin**             | Bidang catatan pribadi pada setiap laporan yang hanya terlihat oleh admin, untuk koordinasi internal (misalnya, "Suku cadang dipesan, ETA 3 hari"). Disimpan di tabel `report_admin_notes`. |
+| S-04 | **Kompresi Gambar**                    | Kompresi gambar sisi klien sebelum unggah ke backend (target: ≤500KB per gambar) untuk menghemat bandwidth dan storage.                                                                     |
+| S-05 | **Tampilan Heatmap (Admin Only)**      | Tombol _toggle_ pada dasbor admin untuk melihat _overlay heatmap_ kepadatan laporan alih-alih penanda individual. Berguna untuk mengidentifikasi zona kegagalan infrastruktur sistemik.     |
+| S-06 | **Pencarian & Filter**                 | Antarmuka publik dan admin mendukung penyaringan berdasarkan: kategori, status, rentang tanggal, kecamatan, dan pencarian kata kunci dalam judul/deskripsi.                                 |
+| S-07 | **Antrian Admin yang Dapat Diurutkan** | Dasbor admin memungkinkan pengurutan laporan berdasarkan: skor prioritas, terbaru dulu, terlama dulu, jumlah upvote.                                                                        |
+| S-08 | **Pembukaan Ulang Laporan / Dispute**  | Pengguna dapat meminta peninjauan ulang jika mereka yakin laporan `Resolved` belum benar-benar diperbaiki. Membuat _flag_ untuk Admin Pusat.                                                |
 
 ### Could-Have (Bagus untuk Dimiliki)
-
-Fitur yang menambah nilai tetapi dapat ditunda ke iterasi pasca-MVP.
 
 | ID   | Fitur                               | Deskripsi                                                                                                                                   |
 | ---- | ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -144,24 +134,22 @@ Fitur yang menambah nilai tetapi dapat ditunda ke iterasi pasca-MVP.
 | C-02 | **Papan Peringkat**                 | Papan peringkat publik top reporter dan top upvoter per bulan.                                                                              |
 | C-03 | **Ekspor ke CSV / PDF**             | Admin Pusat dapat mengekspor data laporan terfilter ke CSV untuk pelaporan eksternal. Ringkasan PDF dengan grafik.                          |
 | C-04 | **PWA / Service Worker**            | Kemampuan offline dasar: mengantrekan pengiriman laporan saat offline, sinkronisasi otomatis saat koneksi kembali.                          |
-| C-05 | **Blur Wajah Otomatis pada Gambar** | ML ringan sisi klien atau heuristik untuk mendeteksi dan mengaburkan potensi wajat/plat nomor dalam gambar yang diunggah demi privasi.      |
+| C-05 | **Blur Wajah Otomatis pada Gambar** | ML ringan sisi klien atau heuristik untuk mendeteksi dan mengaburkan potensi wajah/plat nomor dalam gambar yang diunggah demi privasi.      |
 | C-06 | **Dukungan Multi-Bahasa**           | _Toggle_ Bahasa Indonesia (default) dan Bahasa Inggris.                                                                                     |
 | C-07 | **Halaman Statistik Publik**        | Dasbor agregat publik menampilkan: total laporan, tingkat resolusi, rata-rata waktu penyelesaian, kategori teratas, tanpa memerlukan login. |
 
 ### Won't-Have (Dikecualikan Secara Eksplisit untuk Iterasi Saat Ini)
 
-Fitur yang dikecualikan secara eksplisit untuk mencegah _scope creep_. Didokumentasikan di sini untuk menghindari ambiguitas di masa depan.
-
-| ID   | Fitur                                                     | Alasan Pengecualian                                                                                                                                                                                           |
-| ---- | --------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| W-01 | **Notifikasi Push (Email/SMS/Web Push)**                  | Di luar ruang lingkup. Produk menggunakan model _pull-based_ (pengguna memeriksa secara manual). Ini mengurangi kompleksitas infrastruktur dan menghindari ketergantungan pada penyedia notifikasi eksternal. |
-| W-02 | **Validasi Gambar AI / Auto-Kategorisasi**                | _Over-engineering_ untuk timeline saat ini. Pemilihan kategori manual oleh pengguna dan verifikasi admin sudah cukup.                                                                                         |
-| W-03 | **Aplikasi Mobile Native (iOS/Android)**                  | Produk adalah aplikasi web. Port native app atau React Native tidak direncanakan untuk iterasi ini.                                                                                                           |
-| W-04 | **Blockchain / Smart Contract untuk Transparansi**        | Kompleksitas yang tidak perlu. Audit trail database dengan log tak terubah sudah cukup untuk kebutuhan transparansi.                                                                                          |
-| W-05 | **Kepatuhan Aksesibilitas (WCAG AAA)**                    | Secara eksplisit diprioritaskan rendah sesuai keputusan stakeholder. HTML semantik dasar diharapkan, tetapi optimasi _screen reader_ penuh dan mode kontras tinggi dikecualikan.                              |
-| W-06 | **Integrasi API Eksternal (API Pemerintah, Google Maps)** | Tidak ada integrasi dengan API pelaporan pemerintah eksternal atau penyedia peta berbayar. OpenStreetMap + Leaflet saja.                                                                                      |
-| W-07 | **Server Backend Express.js Terpisah**                    | Arsitektur disederhanakan menjadi Next.js API Routes + Supabase Client/Edge Functions. Server Node/Express terpisah menambah kompleksitas deployment tanpa manfaat proporsional untuk ruang lingkup ini.      |
-| W-08 | **Berbagi Sosial / Mekanik Viral**                        | Tidak ada tombol berbagi bawaan Twitter/Facebook/WhatsApp. Fokus tetap pada mekanik komunitas internal platform.                                                                                              |
+| ID       | Fitur                                                     | Alasan Pengecualian                                                                                                                                                                                           |
+| -------- | --------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| W-01     | **Notifikasi Push (Email/SMS/Web Push)**                  | Di luar ruang lingkup. Produk menggunakan model _pull-based_ (pengguna memeriksa secara manual). Ini mengurangi kompleksitas infrastruktur dan menghindari ketergantungan pada penyedia notifikasi eksternal. |
+| W-02     | **Validasi Gambar AI / Auto-Kategorisasi**                | _Over-engineering_ untuk timeline saat ini. Pemilihan kategori manual oleh pengguna dan verifikasi admin sudah cukup.                                                                                         |
+| W-03     | **Aplikasi Mobile Native (iOS/Android)**                  | Produk adalah aplikasi web. Port native app atau React Native tidak direncanakan untuk iterasi ini.                                                                                                           |
+| W-04     | **Blockchain / Smart Contract untuk Transparansi**        | Kompleksitas yang tidak perlu. Audit trail database dengan log tak terubah sudah cukup untuk kebutuhan transparansi.                                                                                          |
+| W-05     | **Kepatuhan Aksesibilitas (WCAG AAA)**                    | Secara eksplisit diprioritaskan rendah sesuai keputusan stakeholder. HTML semantik dasar diharapkan, tetapi optimasi _screen reader_ penuh dan mode kontras tinggi dikecualikan.                              |
+| W-06     | **Integrasi API Eksternal (API Pemerintah, Google Maps)** | Tidak ada integrasi dengan API pelaporan pemerintah eksternal atau penyedia peta berbayar. OpenStreetMap + Leaflet saja.                                                                                      |
+| ~~W-07~~ | ~~**Server Backend Express.js Terpisah**~~                | ~~**DIHAPUS / DIREVISI.** Arsitektur final menggunakan Express.js terpisah sebagai backend utama. Alasan: frontend menggunakan React (bukan Next.js), sehingga API Routes tidak tersedia.~~                   |
+| W-08     | **Berbagi Sosial / Mekanik Viral**                        | Tidak ada tombol berbagi bawaan Twitter/Facebook/WhatsApp. Fokus tetap pada mekanik komunitas internal platform.                                                                                              |
 
 ---
 
@@ -178,7 +166,7 @@ Fitur yang dikecualikan secara eksplisit untuk mencegah _scope creep_. Didokumen
 **Kriteria Penerimaan:**
 
 - [ ] KP1: Pengguna dapat mengakses formulir registrasi dengan bidang: nama lengkap, email, password (min. 8 karakter), dan konfirmasi password.
-- [ ] KP2: Backend Express menerima payload registrasi, validasi input, hash password dengan bcrypt, insert ke tabel users, generate JWT token, kirim response ke client.
+- [ ] KP2: Backend Express menerima payload registrasi, validasi input, hash password dengan bcrypt, insert ke tabel `users`, generate JWT token, kirim response ke client.
 - [ ] KP3: Setelah registrasi berhasil, profil pengguna dibuat di tabel `users` dengan `role = 'user'`.
 - [ ] KP4: Pengguna secara otomatis login dan diarahkan ke peta publik.
 - [ ] KP5: Jika email sudah ada, sistem menampilkan pesan error yang jelas tanpa mengungkapkan apakah email tersebut ada di database.
@@ -192,7 +180,7 @@ Fitur yang dikecualikan secara eksplisit untuk mencegah _scope creep_. Didokumen
 **Kriteria Penerimaan:**
 
 - [ ] KP1: Pengguna dapat mengakses formulir login dengan bidang email dan password.
-- [ ] KP2: Backend Express memverifikasi email dan password (bcrypt compare), generate JWT access token (15 menit) dan refresh token (7 hari), simpan refresh token di database (atau httpOnly cookie), kembalikan ke client.
+- [ ] KP2: Backend Express memverifikasi email dan password (bcrypt compare), generate JWT access token (15 menit) dan refresh token (7 hari), simpan refresh token di database, kembalikan ke client.
 - [ ] KP3: Saat berhasil, pengguna diarahkan ke halaman terakhir yang dikunjungi atau ke peta publik.
 - [ ] KP4: Saat gagal, sistem menampilkan pesan "Kredensial tidak valid" secara generik.
 - [ ] KP5: Sesi bertahan di seluruh _refresh_ browser sampai logout eksplisit atau kedaluwarsa sesi.
@@ -262,8 +250,8 @@ Fitur yang dikecualikan secara eksplisit untuk mencegah _scope creep_. Didokumen
 - [ ] KP3: Pemilihan lokasi wajib melalui dropdown bertingkat: Provinsi → Kota → Kecamatan. Kelurahan opsional.
 - [ ] KP4: Setelah memilih kecamatan, mini peta muncul diperbesar ke area distrik tersebut. Pengguna dapat meletakkan pin untuk menyempurnakan lokasi. Pin opsional tetapi sangat dianjurkan.
 - [ ] KP5: Jika pin diletakkan, lintang dan bujur ditangkap dan disimpan. Jika tidak, `lat` dan `lng` bernilai NULL tetapi laporan tetap diterima.
-- [ ] KP6: Gambar dikompresi sisi klien ke target ≤500KB masing-masing sebelum unggah ke Supabase Storage.
-- [ ] KP7: Saat submit, gambar diunggah terlebih dahulu. Jika ada gambar yang gagal, seluruh pengiriman dibatalkan dengan error dan tidak ada record database yang dibuat.
+- [ ] KP6: Gambar dikompresi sisi klien ke target ≤500KB masing-masing sebelum unggah ke backend Express.
+- [ ] KP7: Saat submit, gambar diunggah terlebih dahulu ke backend Express, backend melakukan validasi & kompresi ulang jika perlu, lalu backend mengunggah ke Supabase Storage menggunakan Service Role Key. Jika ada gambar yang gagal, seluruh pengiriman dibatalkan dengan error dan tidak ada record database yang dibuat.
 - [ ] KP8: Saat unggah berhasil, baris laporan dimasukkan dengan `status = 'pending_verification`. Laporan tersebut BELUM muncul di peta publik.
 - [ ] KP9: Pengguna melihat pesan sukses: "Laporan berhasil dikirim dan sedang menunggu verifikasi admin."
 - [ ] KP10: Pengguna diarahkan ke halaman "Laporan Saya" di mana laporan baru muncul dengan lencana "Menunggu Verifikasi".
@@ -279,7 +267,7 @@ Fitur yang dikecualikan secara eksplisit untuk mencegah _scope creep_. Didokumen
 - [ ] KP1: Halaman "Laporan Saya" menampilkan semua laporan yang dibuat oleh pengguna yang login, diurutkan terbaru dulu.
 - [ ] KP2: Setiap item menampilkan: judul, ikon kategori, lencana status, tanggal pengiriman, thumbnail, dan jumlah upvote.
 - [ ] KP3: Mengklik item menavigasi ke halaman detail laporan.
-- [ ] KP4: Laporan dengan `updated_at > user.last_seen_at` menampilkan indikator "Pembaruan Baru" (titik merah atau lencana "Diperbarui").
+- [ ] KP4: Laporan dengan `updated_at > user.last_seen_at` menampilkan indikator "Pembaruan Baru" (titik merah atau lencana "Diperbarui"). **Pendekatan MVP: global `last_seen_at` per user.**
 - [ ] KP5: Paginasi atau _infinite scroll_ diimplementasikan jika pengguna memiliki >20 laporan.
 
 ---
@@ -333,7 +321,7 @@ Fitur yang dikecualikan secara eksplisit untuk mencegah _scope creep_. Didokumen
 
 - [ ] KP1: Admin dapat memperbarui status dari `verified` → `in_progress`, atau `in_progress` → `resolved`.
 - [ ] KP2: Perubahan status dibatasi pada progresi maju saja. Tidak ada perubahan mundur yang diizinkan (kecuali _override_ Admin Pusat).
-- [ ] KP3: Saat menandai `resolved`, admin dapat secara opsional mengunggah gambar "sesudah" (maks. 3) untuk mendemonstrasikan perbaikan.
+- [ ] KP3: Saat menandai `resolved`, admin dapat secara opsional mengunggah gambar "sesudah" (maks. 3) untuk mendemonstrasikan perbaikan. Gambar ini ditandai `is_after = true` dan hanya dapat diunggah oleh admin.
 - [ ] KP4: Perubahan status memicu pembaruan real-time pada peta publik dan halaman detail laporan.
 - [ ] KP5: Log aktivitas mencatat: status lama, status baru, aktor, stempel waktu, dan catatan opsional.
 - [ ] KP6: Bidang `updated_at` laporan di-_refresh_, memicu lencana "Pembaruan Baru" bagi pelapor saat kunjungan berikutnya.
@@ -415,7 +403,7 @@ Fitur yang dikecualikan secara eksplisit untuk mencegah _scope creep_. Didokumen
 - [ ] KP3: Linimasa tak terubah dan diurutkan dari terbaru ke terlama.
 - [ ] KP4: Event upvote diagregasi jika memungkinkan (misalnya "+5 upvote minggu ini") untuk mencegah _spam_ linimasa dari laporan populer.
 
-#### US-LOG-02: Memeriksa Pembaruan (Berbasis Pull)
+#### US-LOG-02: Memeriksa Pembaruan (Berbasis Pull - Global)
 
 > **Sebagai seorang** warga,  
 > **Saya ingin** melihat indikator visual ketika laporan saya telah diperbarui sejak kunjungan terakhir,  
@@ -425,8 +413,10 @@ Fitur yang dikecualikan secara eksplisit untuk mencegah _scope creep_. Didokumen
 
 - [ ] KP1: Pada setiap _page load_ yang terautentikasi, sistem memperbarui `users.last_seen_at` ke stempel waktu saat ini.
 - [ ] KP2: Pada halaman "Laporan Saya", laporan apa pun di mana `updated_at > user.last_seen_at` menampilkan lencana titik merah atau label "Diperbarui".
-- [ ] KP3: Mengklik masuk ke detail laporan menandai laporan tersebut sebagai "sudah dilihat" (memperbarui `last_seen_at` per laporan atau menghapus lencana).
-- [ ] KP4: Lencana bertahan di seluruh sesi sampai pengguna melihat laporan yang diperbarui.
+- [ ] KP3: Mengklik masuk ke detail laporan tidak menghapus lencana secara individual (karena pendekatan global MVP). Lencana hilang saat _page load_ berikutnya setelah `last_seen_at` diperbarui.
+- [ ] KP4: Lencana bertahan di seluruh sesi sampai pengguna melakukan _page load_ baru atau logout-login ulang.
+
+> **Catatan Teknis:** Pendekatan global ini adalah trade-off MVP. Untuk tracking per laporan yang lebih akurat, diperlukan tabel `user_report_views` (Could-Have / Post-MVP).
 
 ---
 
@@ -441,7 +431,7 @@ Fitur yang dikecualikan secara eksplisit untuk mencegah _scope creep_. Didokumen
 **Kriteria Penerimaan:**
 
 - [ ] KP1: Dasbor Admin Pusat menyertakan bagian "Manajemen Pengguna".
-- [ ] KP2: Dapat mengundang admin baru melalui email. Sistem mengirimkan undangan (atau membuat akun dengan password sementara).
+- [ ] KP2: Dapat mengundang admin baru melalui email. Sistem membuat entri di tabel `invitations` dengan token unik dan batas waktu (24 jam). Email undangan dikirim (atau token dibagikan manual jika email service belum tersedia).
 - [ ] KP3: Saat membuat Admin Wilayah, Admin Pusat harus menugaskan tepat satu `wilayah_id` dari data master.
 - [ ] KP4: Dapat menonaktifkan/mengaktifkan kembali akun admin. Admin yang dinonaktifkan kehilangan akses dasbor segera.
 - [ ] KP5: Dapat menugaskan ulang Admin Wilayah ke zona berbeda. Dasbor mereka diperbarui saat _load_ berikutnya.
@@ -459,26 +449,29 @@ Fitur yang dikecualikan secara eksplisit untuk mencegah _scope creep_. Didokumen
 - [ ] KP2: Jika ya, laporan muncul di dasbor admin tersebut.
 - [ ] KP3: Jika tidak, laporan muncul di dasbor Admin Pusat dengan tag filter "Zona Tanpa Admin".
 - [ ] KP4: Admin Pusat kemudian dapat memverifikasi/mengelolanya langsung atau menugaskan admin ke zona tersebut dan menugaskan ulang laporan.
-- [ ] KP5: Logika ini ditegakkan di lapisan aplikasi dan tercermin dalam kebijakan RLS.
+- [ ] KP5: Logika ini ditegakkan sepenuhnya di lapisan aplikasi Express (bukan RLS database).
 
 ---
 
-## Lampiran A: Referensi Tech Stack
+## Lampiran A: Referensi Tech Stack Final
 
-| Lapisan                | Teknologi                                        | Catatan                                                                   |
-| ---------------------- | ------------------------------------------------ | ------------------------------------------------------------------------- |
-| **Framework Frontend** | Next.js 14+ (App Router)                         | Server Components untuk data awal, Client Components untuk interaktivitas |
-| **Library UI**         | React 18+, Tailwind CSS, Shadcn UI, Lucide Icons | Desain responsif _mobile-first_                                           |
-| **State Management**   | TanStack Query (React Query)                     | Caching state server, _background refetch_, _optimistic updates_          |
-| **Mesin Peta**         | Leaflet.js + React-Leaflet                       | Plugin MarkerCluster wajib untuk penanganan kepadatan                     |
-| **Penyedia Tile**      | OpenStreetMap (via default Leaflet)              | Tidak memerlukan API key                                                  |
-| **Database**           | Supabase (PostgreSQL)                            | DB                                                                        |
-| **Backend**            | Node.js + Express.js                             | Auth, DB, Realtime, Storage dalam satu platform                           |
-| **Lapisan API**        | Express.js REST API                              | Menggunakan server Express terpisah                                       |
-| **Penyimpanan File**   | Supabase Storage                                 | Unggah langsung dengan kebijakan RLS                                      |
-| **Real-Time**          | Socket.io (di atas Express)                      | Room broadcast untuk peta publik dan dasbor admin                         |
-| **Autentikasi**        | Custom JWT (Express + jsonwebtoken)              | Sesi berbasis JWT                                                         |
-| **Deployment**         | Vercel atau Netlify                              | Kompatibel dengan _free tier_                                             |
+| Lapisan                | Teknologi                                             | Catatan                                                                                             |
+| ---------------------- | ----------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| **Framework Frontend** | React + Vite                                          | SPA (_Single Page Application_) dengan React Router.                                                |
+| **Library UI**         | Tailwind CSS, Shadcn UI, Lucide Icons                 | Desain responsif _mobile-first_.                                                                    |
+| **State Management**   | TanStack Query (React Query)                          | Caching state server, _background refetch_, _optimistic updates_.                                   |
+| **Routing Client**     | React Router                                          | Navigasi halaman publik, admin, dan autentikasi.                                                    |
+| **Mesin Peta**         | Leaflet.js + React-Leaflet                            | Plugin MarkerCluster wajib untuk penanganan kepadatan.                                              |
+| **Penyedia Tile**      | OpenStreetMap (via default Leaflet)                   | Tidak memerlukan API key.                                                                           |
+| **Database**           | Supabase (PostgreSQL)                                 | DB utama.                                                                                           |
+| **Backend**            | Node.js + Express.js                                  | Server terpisah yang menangani autentikasi, business logic, dan real-time.                          |
+| **Lapisan API**        | Express.js REST API                                   | Menggunakan server Express terpisah. Semua query ke Supabase via Service Role Key dari backend.     |
+| **Penyimpanan File**   | Supabase Storage                                      | Diakses oleh backend Express menggunakan Service Role Key. Client tidak mengakses storage langsung. |
+| **Real-Time**          | Socket.io (di atas Express)                           | Room broadcast untuk peta publik dan dasbor admin.                                                  |
+| **Autentikasi**        | Custom JWT (Express + jsonwebtoken)                   | Access token (15 menit) + Refresh token (7 hari). Refresh token disimpan di DB.                     |
+| **Deployment**         | Frontend: Vercel/Netlify; Backend: VPS/Railway/Render | Frontend dan backend di-deploy terpisah.                                                            |
+
+---
 
 ## Lampiran B: Mesin Status State Machine
 
@@ -506,7 +499,9 @@ Fitur yang dikecualikan secara eksplisit untuk mencegah _scope creep_. Didokumen
 - `Resolved` → `In Progress` / `Verified`: **Hanya override Admin Pusat** (dispute/pembukaan ulang).
 - `Verified` → `Rejected`: **Hanya override Admin Pusat**.
 
-## Lampiran C: Formula Skor Prioritas (v1.0)
+---
+
+## Lampiran C: Formula Skor Prioritas (v2.0 Final)
 
 ```
 Priority Score = (Jumlah_Upvote × 3)
@@ -528,7 +523,8 @@ Priority Score = (Jumlah_Upvote × 3)
 - Skor dihitung saat _read_ oleh API backend atau melalui kolom _generated_ PostgreSQL.
 - Lantai skor minimum: 0.
 - Urutan default dasbor admin: Skor Prioritas (menurun).
+- Bonus koordinat (`+2`) memberikan insentif bagi warga untuk menyertakan pin lokasi, meningkatkan akurasi data.
 
 ---
 
-_Akhir Dokumen_
+_End Of Document_
