@@ -102,6 +102,24 @@
 | **Path Restriction**      | Backend menentukan folder path (`reports/{report_id}/{uuid}.jpg`); client tidak bisa mengontrol path.   |
 | **Service Role Key**      | Hanya backend yang memegang key. Client mengunggah ke Express → Express mengunggah ke Supabase.         |
 
+### 3.5 JWT Token Architecture
+
+```
+Header:    { "alg": "RS256", "typ": "JWT" }
+Payload:   {
+             "sub": "user_uuid",
+             "role": "owner|cashier",
+             "iat": 1718900000,
+             "exp": 1718986400,
+             "jti": "unique_token_id"
+           }
+Signature: RSASHA256(base64url(header) + "." + base64url(payload), private_key)
+```
+
 ---
 
 _End of Document_
+
+```
+
+```
