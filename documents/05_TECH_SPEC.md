@@ -119,7 +119,3 @@ Signature: RSASHA256(base64url(header) + "." + base64url(payload), private_key)
 ---
 
 _End of Document_
-
-```
-
-```
