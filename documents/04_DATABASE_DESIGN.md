@@ -12,6 +12,8 @@ erDiagram
     USERS ||--o{ REPORT_ADMIN_NOTES : writes
     USERS ||--o{ ACTIVITY_LOGS : performs
     USERS ||--o{ INVITATIONS : creates
+    USERS ||--o{ COMMENTS : mengomentari
+    USERS ||--o{ DISPUTES : mendebatkan
     USERS }o--|| WILAYAH : "assigned_to"
     WILAYAH ||--o{ WILAYAH : "parent_of"
     WILAYAH ||--o{ REPORTS : "located_in"
@@ -21,6 +23,8 @@ erDiagram
     REPORTS ||--o{ UPVOTES : receives
     REPORTS ||--o{ REPORT_ADMIN_NOTES : has
     REPORTS ||--o{ ACTIVITY_LOGS : tracks
+    REPORTS ||--o{ COMMENTS : dikomentari
+    REPORTS ||--o{ DISPUTES : didebatkan
 
     USERS {
         uuid id PK
@@ -127,6 +131,23 @@ erDiagram
         boolean is_used
         uuid created_by FK
         timestamptz created_at
+    }
+
+    COMMENTS {
+        uuid id PK
+        uuid report_id FK
+        uuid user_id FK
+        text text
+        timestampz created_at
+    }
+
+    DISPUTES {
+        uuid id PK
+        uuid report_id FK
+        uuid user_id FK
+        varchar reason
+        varchar status
+        timestampz created_at
     }
 ```
 
@@ -272,17 +293,17 @@ Tabel catatan internal admin yang tidak terlihat oleh publik.
 
 Tabel audit trail immutable untuk mencatat seluruh tindakan pada laporan.
 
-| Column Name   | Data Type     | Constraints                                       | Description                                                                                                                                                |
-| ------------- | ------------- | ------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `id`          | `uuid`        | **PK**, `DEFAULT gen_random_uuid()`               | Identitas unik log.                                                                                                                                        |
-| `report_id`   | `uuid`        | **NN**, **FK** → `reports.id` (ON DELETE CASCADE) | Laporan terkait tindakan.                                                                                                                                  |
-| `actor_id`    | `uuid`        | **FK** → `users.id` (ON DELETE SET NULL)          | Pelaku tindakan; `NULL` jika pengguna dihapus (preservasi log).                                                                                            |
-| `action_type` | `varchar(50)` | **NN**                                            | Jenis tindakan: `report_created`, `upvote_added`, `upvote_removed`, `verified`, `rejected`, `status_changed`, `zone_reassigned`, `override`, `note_added`. |
-| `old_value`   | `text`        | **NUL**                                           | Nilai sebelum perubahan (misal: status lama, zona lama).                                                                                                   |
-| `new_value`   | `text`        | **NUL**                                           | Nilai setelah perubahan (misal: status baru, zona baru).                                                                                                   |
-| `metadata`    | `jsonb`       | **NUL**                                           | Konteks tambahan fleksibel dalam format JSON (misal: `{ "rejection_reason": "...", "upvote_delta": 5 }`).                                                  |
-| `is_override` | `boolean`     | **NN**, `DEFAULT false`                           | Penanda `true` jika tindakan dilakukan oleh Admin Pusat sebagai override.                                                                                  |
-| `created_at`  | `timestamptz` | **NN**, `DEFAULT now()`                           | Waktu tindakan terjadi (immutable).                                                                                                                        |
+| Column Name   | Data Type     | Constraints                                       | Description                                                                                                                                                                     |
+| ------------- | ------------- | ------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`          | `uuid`        | **PK**, `DEFAULT gen_random_uuid()`               | Identitas unik log.                                                                                                                                                             |
+| `report_id`   | `uuid`        | **NN**, **FK** → `reports.id` (ON DELETE CASCADE) | Laporan terkait tindakan.                                                                                                                                                       |
+| `actor_id`    | `uuid`        | **FK** → `users.id` (ON DELETE SET NULL)          | Pelaku tindakan; `NULL` jika pengguna dihapus (preservasi log).                                                                                                                 |
+| `action_type` | `varchar(50)` | **NN**                                            | Jenis tindakan: `report_created`, `upvote_added`, `upvote_removed`, `verified`, `rejected`, `status_changed`, `zone_reassigned`, `override`, `note_added`, `dispute_requested`. |
+| `old_value`   | `text`        | **NUL**                                           | Nilai sebelum perubahan (misal: status lama, zona lama).                                                                                                                        |
+| `new_value`   | `text`        | **NUL**                                           | Nilai setelah perubahan (misal: status baru, zona baru).                                                                                                                        |
+| `metadata`    | `jsonb`       | **NUL**                                           | Konteks tambahan fleksibel dalam format JSON (misal: `{ "rejection_reason": "...", "upvote_delta": 5 }`).                                                                       |
+| `is_override` | `boolean`     | **NN**, `DEFAULT false`                           | Penanda `true` jika tindakan dilakukan oleh Admin Pusat sebagai override.                                                                                                       |
+| `created_at`  | `timestamptz` | **NN**, `DEFAULT now()`                           | Waktu tindakan terjadi (immutable).                                                                                                                                             |
 
 ---
 
@@ -301,6 +322,35 @@ Tabel undangan pembuatan akun admin oleh Admin Pusat.
 | `is_used`             | `boolean`      | **NN**, `DEFAULT false`                                                                     | Penanda apakah undangan sudah diklaim.              |
 | `created_by`          | `uuid`         | **NN**, **FK** → `users.id` (ON DELETE CASCADE)                                             | Admin Pusat yang mengirim undangan.                 |
 | `created_at`          | `timestamptz`  | **NN**, `DEFAULT now()`                                                                     | Waktu undangan dibuat.                              |
+
+---
+
+### 2.11 `comments`
+
+Tabel comments untuk komenan user disebuah laporan.
+
+| Column Name  | Data Type     | Constraints                                       | Description               |
+| ------------ | ------------- | ------------------------------------------------- | ------------------------- |
+| `id`         | `uuid`        | **PK**, `DEFAULT gen_random_uuid()`               | Identitas unik undangan.  |
+| `report_id`  | `uuid`        | **NN**, **FK** → `reports.id` (ON DELETE CASCADE) | Laporan terkait tindakan. |
+| `user_id`    | `uuid`        | **NN**, **FK** → `users.id` (ON DELETE CASCADE)   | User penulis komentar.    |
+| `text`       | `text`        | **NN**                                            | isi komentar user.        |
+| `created_at` | `timestamptz` | **NN**, `DEFAULT now()`                           | Waktu komentar dibuat.    |
+
+---
+
+### 2.12 `disputes`
+
+Tabel disputed untuk sebuah laporan.
+
+| Column Name  | Data Type      | Constraints                                       | Description               |
+| ------------ | -------------- | ------------------------------------------------- | ------------------------- |
+| `id`         | `uuid`         | **PK**, `DEFAULT gen_random_uuid()`               | Identitas unik undangan.  |
+| `report_id`  | `uuid`         | **NN**, **FK** → `reports.id` (ON DELETE CASCADE) | Laporan terkait tindakan. |
+| `user_id`    | `uuid`         | **NN**, **FK** → `users.id` (ON DELETE CASCADE)   | User penulis sengketa.    |
+| `reason`     | `varchar(255)` | **NN**                                            | isi alasan user.          |
+| `status`     | `varchar(255)` | **NN**                                            | isi status sengketa.      |
+| `created_at` | `timestamptz`  | **NN**, `DEFAULT now()`                           | Waktu komentar dibuat.    |
 
 ---
 
@@ -331,6 +381,7 @@ Tabel undangan pembuatan akun admin oleh Admin Pusat.
 | `idx_activity_logs_override`   | `activity_logs`      | `is_override`, `created_at DESC`           | B-Tree          | Audit khusus tindakan override Admin Pusat.                                                                  |
 | `idx_invitations_token`        | `invitations`        | `token`                                    | B-Tree, Unique  | Validasi link undangan admin.                                                                                |
 | `idx_invitations_email_unused` | `invitations`        | `email`, `is_used`, `expires_at`           | B-Tree          | Cek undangan aktif per email.                                                                                |
+| `idx_comments_report`          | `comments`           | `report_id`, `created_at desc`             | B-Tree          | Cek komentar.                                                                                                |
 
 ### 3.2 Query Optimization Policies
 

@@ -105,10 +105,10 @@
 ### 3.5 JWT Token Architecture
 
 ```
-Header:    { "alg": "RS256", "typ": "JWT" }
+Header:    { "alg": "HS256", "typ": "JWT" }
 Payload:   {
              "sub": "user_uuid",
-             "role": "owner|cashier",
+             "role": "user | admin_wilayah | admin_pusat",
              "iat": 1718900000,
              "exp": 1718986400,
              "jti": "unique_token_id"
