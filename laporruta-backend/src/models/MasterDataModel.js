@@ -2,7 +2,7 @@ const BaseModel = require("./BaseModel");
 
 class MasterDataModel extends BaseModel {
   constructor() {
-    super("categories");
+    super("master_data");
   }
 
   async getCategories() {
