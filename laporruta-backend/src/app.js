@@ -8,6 +8,7 @@ const routes = require("./routes");
 const errorHandler = require("./middlewares/errorHandler");
 const cookieParser = require("cookie-parser");
 const authRoutes = require("./routes/authRoutes");
+const masterRoutes = require("./routes/MasterDataRoutes");
 
 const app = express();
 
@@ -52,6 +53,7 @@ app.get("/health", (req, res) => {
 app.use(cookieParser());
 app.use("/api/v1", routes);
 app.use("/api/v1/auth", authRoutes);
+app.use("/api/v1/master", masterRoutes);
 
 // 404 handler
 app.use((req, res) => {
