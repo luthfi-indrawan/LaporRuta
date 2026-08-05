@@ -1,7 +1,5 @@
 const express = require("express");
 const MasterDataController = require("../controllers/MasterDataController");
-const validate = require("../middlewares/validate");
-const authMiddleware = require("../middlewares/auth");
 
 const router = express.Router();
 router.get(
