@@ -10,7 +10,7 @@ class BaseModel {
   }
 
   async findAll(options = {}) {
-    const { where = {}, orderBy = 'id DESC', limit = null, offset = null } = options;
+    const { where = {}, orderBy = 'created_at DESC', limit = null, offset = null } = options;
     let query = `SELECT * FROM ${this.tableName}`;
     const values = [];
     const conditions = [];

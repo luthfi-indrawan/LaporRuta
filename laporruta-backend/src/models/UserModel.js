@@ -1,12 +1,12 @@
-const BaseModel = require('./BaseModel');
+const BaseModel = require("./BaseModel");
 
 class UserModel extends BaseModel {
   constructor() {
-    super('users');
+    super("users");
   }
 
   async findByEmail(email) {
-    return await this.findOne({ email });
+    return await this.findOne({ email: email.toLowerCase() });
   }
 
   async findByUsername(username) {

@@ -1,27 +1,36 @@
 class ResponseHelper {
-  static success(res, data, message = 'Success', statusCode = 200) {
+  static success(res, result, message = "successfully", statusCode = 200) {
     return res.status(statusCode).json({
-      success: true,
-      message,
-      data,
+      code: statusCode,
+      message: message,
+      result: result,
     });
   }
 
-  static error(res, message = 'Error', statusCode = 500, errors = null) {
+  static error(
+    res,
+    message = "Terjadi kesalahan",
+    statusCode = 500,
+    error = null,
+  ) {
     const response = {
-      success: false,
-      message,
+      code: statusCode,
+      message: message,
     };
-    if (errors) response.errors = errors;
+    if (error !== null) {
+      response.error = error;
+    }
     return res.status(statusCode).json(response);
   }
 
-  static paginated(res, data, pagination, message = 'Success') {
+  static paginated(res, data, metadata, message = "successfully") {
     return res.status(200).json({
-      success: true,
-      message,
-      data,
-      pagination,
+      code: 200,
+      message: message,
+      result: {
+        data: data,
+        metadata: metadata,
+      },
     });
   }
 }
