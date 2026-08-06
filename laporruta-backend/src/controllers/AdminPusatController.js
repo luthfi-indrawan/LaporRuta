@@ -99,6 +99,70 @@ class AdminPusatController {
       next(error);
     }
   }
+  async getStatistics(req, res, next) {
+    try {
+      const result = await this.service.getStatistics();
+
+      return ResponseHelper.success(res, result, "successfully", 200);
+    } catch (error) {
+      next(error);
+    }
+  }
+  async getHeatmapData(req, res, next) {
+    try {
+      const result = await this.service.getHeatmapData();
+
+      return ResponseHelper.success(res, result, "successfully", 200);
+    } catch (error) {
+      next(error);
+    }
+  }
+  async exportCSV(req, res, next) {
+    try {
+      const reports = await this.service.exportReportsCSV(req.query);
+
+      const headers = [
+        "Title",
+        "Description",
+        "Category",
+        "Wilayah",
+        "Address",
+        "Status",
+        "Created At",
+      ];
+
+      const rows = reports.map((report) => [
+        report.title,
+        report.description,
+        report.category,
+        report.wilayah,
+        report.address_text,
+        report.status,
+        report.created_at,
+      ]);
+
+      const csv = [
+        headers.join(","),
+        ...rows.map((row) =>
+          row
+            .map((value) => `"${String(value ?? "").replace(/"/g, '""')}"`)
+            .join(","),
+        ),
+      ].join("\n");
+
+      const today = new Date().toISOString().split("T")[0];
+
+      res.setHeader("Content-Type", "text/csv");
+      res.setHeader(
+        "Content-Disposition",
+        `attachment; filename="laporan-${today}.csv"`,
+      );
+
+      return res.status(200).send(csv);
+    } catch (error) {
+      next(error);
+    }
+  }
 }
 
 module.exports = new AdminPusatController();

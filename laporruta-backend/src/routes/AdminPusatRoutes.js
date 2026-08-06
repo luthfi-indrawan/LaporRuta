@@ -36,4 +36,22 @@ router.put(
   roleMiddleware(Roles.AdminPusat),
   AdminPusatController.editReportMetadata.bind(AdminPusatController),
 );
+router.get(
+  "/stats",
+  authMiddleware,
+  roleMiddleware(Roles.AdminPusat),
+  AdminPusatController.getStatistics.bind(AdminPusatController),
+);
+router.get(
+  "/heatmap",
+  authMiddleware,
+  roleMiddleware(Roles.AdminPusat),
+  AdminPusatController.getHeatmapData.bind(AdminPusatController),
+);
+router.get(
+  "/exports/csv",
+  authMiddleware,
+  roleMiddleware(Roles.AdminPusat),
+  AdminPusatController.exportCSV.bind(AdminPusatController),
+);
 module.exports = router;
