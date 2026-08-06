@@ -22,7 +22,10 @@ class SupabaseStorage {
         upsert: true,
       });
 
-    if (error) throw error;
+    if (error) {
+      console.error("SUPABASE UPLOAD ERROR:", error);
+      throw error;
+    }
     return data;
   }
 
