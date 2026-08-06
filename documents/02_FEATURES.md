@@ -56,7 +56,7 @@ Mengklik penanda membuka popup/kartu yang menampilkan: judul laporan, kategori, 
 
 ### 1. Reporting Form
 
-Field wajib: Judul (maks. 100 karakter), Deskripsi (maks. 500), Kategori (pilih dari data master), Alamat Spesifik (maks. 200), dan Lokasi Administrasi (dropdown bertingkat). Field opsional: Penanda Pin pada peta & Unggah Gambar (1–3 file, maks. 5MB, format JPG/PNG).
+Field wajib: Judul (maks. 100 karakter), Deskripsi (maks. 500), Kategori (pilih dari data master), Alamat Spesifik (maks. 200), dan Lokasi Administrasi (dropdown bertingkat). Field opsional: Penanda Pin pada peta & Unggah Gambar (1–3 file, maks. 5MB, format PNG).
 
 ### 2. Multi-level Location Selector
 
