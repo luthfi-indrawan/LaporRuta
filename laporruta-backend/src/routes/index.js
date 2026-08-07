@@ -6,6 +6,7 @@ const userRoutes = require("./userRoutes");
 const uploadRoutes = require("./uploadRoutes");
 const activityLogsRoutes = require("./ActivityLogsRoutes");
 const adminpusatRoutes = require("./AdminPusatRoutes");
+const commentsRoutes = require("./CommentsRoutes");
 
 const router = express.Router();
 
@@ -19,5 +20,6 @@ router.use("/uploads", uploadRoutes);
 
 router.use("/reports/:id/activity-logs", activityLogsRoutes);
 router.use("/admin/pusat", adminpusatRoutes);
+router.use("/reports/:id/comments", commentsRoutes);
 
 module.exports = router;
